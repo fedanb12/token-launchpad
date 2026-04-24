@@ -4,7 +4,8 @@ import { ethers } from 'ethers';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/NavBar';
 import { useWallet } from '../context/WalletContext';
-import TokenABI from '../contracts/TokenLaunchpad.json';
+import TokenABI from '../contracts/Token.json';
+import { getToken, saveTrade, getTradesForToken } from '../services/tokenService';
 
 const COLORS = {
     bg: "#050A0E",
@@ -67,6 +68,20 @@ export default function TokenPage() {
         setContract(c);
         loadData(c, account);
 
+        // Load trade history from Firebase
+        getToken(address).then(tokenData => {
+            if (tokenData) {
+                getTradesForToken(address).then(trades => {
+                    setActivity(trades.map(t => ({
+                        type: t.type,
+                        wallet: t.wallet,
+                        amount: t.amount,
+                        time: new Date(t.timestamp).toLocaleTimeString("en-US", { hour12: false })
+                    })));
+                });
+            }
+        });
+
         const interval = setInterval(() => loadData(c, account), 5000);
         return () => clearInterval(interval);
     }, [address, signer, account, loadData]);
@@ -84,6 +99,13 @@ export default function TokenPage() {
             await tx.wait();
             setStatus("✅ Buy successful!");
             addActivity("BUY", buyAmount + " ETH");
+            await saveTrade({
+                tokenAddress: address,
+                type: "BUY",
+                wallet: `${account.slice(0, 6)}...${account.slice(-4)}`,
+                amount: buyAmount + " ETH",
+                trader: account,
+            });
             loadData(contract, account);
             setBuyAmount("");
         } catch (e) {
@@ -100,6 +122,13 @@ export default function TokenPage() {
             await tx.wait();
             setStatus("✅ Sell successful!");
             addActivity("SELL", sellAmount + " tokens");
+            await saveTrade({
+                tokenAddress: address,
+                type: "SELL",
+                wallet: `${account.slice(0, 6)}...${account.slice(-4)}`,
+                amount: sellAmount + " tokens",
+                trader: account,
+            });
             loadData(contract, account);
             setSellAmount("");
         } catch (e) {
@@ -210,7 +239,6 @@ export default function TokenPage() {
                         <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 20 }}>// TRADE</div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                            {/* Buy */}
                             <div>
                                 <div style={{ fontSize: 10, color: COLORS.accent, letterSpacing: "0.1em", marginBottom: 8 }}>BUY</div>
                                 <div style={{ display: "flex", gap: 8 }}>
@@ -227,7 +255,6 @@ export default function TokenPage() {
                                 </div>
                             </div>
 
-                            {/* Sell */}
                             <div>
                                 <div style={{ fontSize: 10, color: COLORS.red, letterSpacing: "0.1em", marginBottom: 8 }}>SELL</div>
                                 <div style={{ display: "flex", gap: 8 }}>

@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import Navbar from '../components/NavBar';
 import { useWallet } from '../context/WalletContext';
 import TokenFactoryABI from '../contracts/TokenFactory.json';
+import { saveToken } from '../services/tokenService';
 
 const FACTORY_ADDRESS = "0x502cB0406961E5E7Adb7C4cB5fb7aD4dDF6cF259";
 
@@ -65,6 +66,16 @@ export default function Launch() {
             if (event) {
                 const parsed = factory.interface.parseLog(event);
                 const tokenAddress = parsed.args[0];
+
+                await saveToken({
+                    tokenAddress,
+                    name: form.name,
+                    symbol: form.ticker.toUpperCase(),
+                    description: form.description,
+                    imageUrl: form.imageUrl,
+                    creator: account,
+                });
+
                 setStatus("✅ Token launched!");
                 setTimeout(() => navigate(`/token/${tokenAddress}`), 1500);
             }
@@ -96,7 +107,6 @@ export default function Launch() {
 
                 <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 32, display: "flex", flexDirection: "column", gap: 20 }}>
 
-                    {/* Name */}
                     <div>
                         <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 8 }}>TOKEN NAME *</div>
                         <input
@@ -108,7 +118,6 @@ export default function Launch() {
                         />
                     </div>
 
-                    {/* Ticker */}
                     <div>
                         <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 8 }}>TICKER SYMBOL *</div>
                         <input
@@ -120,7 +129,6 @@ export default function Launch() {
                         />
                     </div>
 
-                    {/* Description */}
                     <div>
                         <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 8 }}>DESCRIPTION</div>
                         <textarea
@@ -133,7 +141,6 @@ export default function Launch() {
                         />
                     </div>
 
-                    {/* Image URL */}
                     <div>
                         <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 8 }}>IMAGE URL</div>
                         <input
@@ -148,19 +155,16 @@ export default function Launch() {
                         )}
                     </div>
 
-                    {/* Fee notice */}
                     <div style={{ background: COLORS.bg, border: `1px solid ${COLORS.border}`, padding: 14, fontSize: 11, color: COLORS.muted, lineHeight: 1.8 }}>
                         ⚡ Creation fee: <span style={{ color: COLORS.accent }}>0.001 ETH</span> — This deploys your token contract on Sepolia.
                     </div>
 
-                    {/* Status */}
                     {status && (
                         <div style={{ padding: 12, background: COLORS.bg, border: `1px solid ${COLORS.border}`, fontSize: 12, color: COLORS.yellow }}>
                             {status}
                         </div>
                     )}
 
-                    {/* Launch Button */}
                     <button
                         onClick={handleLaunch}
                         disabled={loading}

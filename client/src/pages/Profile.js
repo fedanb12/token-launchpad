@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ethers } from 'ethers';
 import Navbar from '../components/NavBar';
 import { useWallet } from '../context/WalletContext';
-import TokenFactoryABI from '../contracts/TokenFactory.json';
-
-const FACTORY_ADDRESS = "0x502cB0406961E5E7Adb7C4cB5fb7aD4dDF6cF259";
-
+import { getTokensByCreator } from '../services/tokenService';
 const COLORS = {
     bg: "#050A0E",
     surface: "#0A1520",
@@ -33,10 +29,7 @@ export default function Profile() {
 
     const loadProfile = async () => {
         try {
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const factory = new ethers.Contract(FACTORY_ADDRESS, TokenFactoryABI.abi, provider);
-            const allTokens = await factory.getTokens();
-            const myTokens = allTokens.filter(t => t.creator.toLowerCase() === address.toLowerCase());
+            const myTokens = await getTokensByCreator(address);
             setTokens(myTokens);
         } catch (e) {
             console.error(e);

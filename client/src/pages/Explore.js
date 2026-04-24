@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ethers } from 'ethers';
 import Navbar from '../components/NavBar';
-import TokenFactoryABI from '../contracts/TokenFactory.json';
+import { getTokens } from '../services/tokenService';
 
-const FACTORY_ADDRESS = "0x502cB0406961E5E7Adb7C4cB5fb7aD4dDF6cF259";
 
 const COLORS = {
     bg: "#050A0E",
@@ -29,16 +27,13 @@ export default function Explore() {
 
     const loadTokens = async () => {
         try {
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const factory = new ethers.Contract(FACTORY_ADDRESS, TokenFactoryABI.abi, provider);
-            const allTokens = await factory.getTokens();
-            setTokens([...allTokens].reverse());
+            const allTokens = await getTokens();
+            setTokens(allTokens);
         } catch (e) {
             console.error(e);
         }
         setLoading(false);
     };
-
     const filtered = tokens.filter(t =>
         t.name.toLowerCase().includes(search.toLowerCase()) ||
         t.symbol.toLowerCase().includes(search.toLowerCase())
