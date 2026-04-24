@@ -1,14 +1,15 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  console.log("Deploying TokenLaunchpad...");
+  console.log("Deploying TokenFactory...");
 
-  const Factory = await ethers.getContractFactory("TokenLaunchpad");
-  const contract = await Factory.deploy("My Token", "MTK");
+  const Factory = await ethers.getContractFactory("TokenFactory");
+  const factory = await Factory.deploy();
 
-  await contract.waitForDeployment();
+  await factory.waitForDeployment();
 
-  console.log("TokenLaunchpad deployed to:",  await contract.getAddress());
+  const address = await factory.getAddress();
+  console.log("TokenFactory deployed to:", address);
 }
 
 main().catch((error) => {

@@ -14,10 +14,28 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
+      name: "Token",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Token__factory>;
+    getContractFactory(
+      name: "TokenFactory",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TokenFactory__factory>;
+    getContractFactory(
       name: "TokenLaunchpad",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TokenLaunchpad__factory>;
 
+    getContractAt(
+      name: "Token",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Token>;
+    getContractAt(
+      name: "TokenFactory",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.TokenFactory>;
     getContractAt(
       name: "TokenLaunchpad",
       address: string | ethers.Addressable,
@@ -25,10 +43,28 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.TokenLaunchpad>;
 
     deployContract(
+      name: "Token",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Token>;
+    deployContract(
+      name: "TokenFactory",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TokenFactory>;
+    deployContract(
       name: "TokenLaunchpad",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TokenLaunchpad>;
 
+    deployContract(
+      name: "Token",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Token>;
+    deployContract(
+      name: "TokenFactory",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TokenFactory>;
     deployContract(
       name: "TokenLaunchpad",
       args: any[],
