@@ -3,11 +3,11 @@ import toast from 'react-hot-toast';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { ethers } from 'ethers';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/NavBar';
 import { useWallet } from '../context/WalletContext';
 import TokenABI from '../contracts/Token.json';
 import { getToken, saveTrade, getTradesForToken } from '../services/tokenService';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
 
 const COLORS = {
     bg: "#050A0E",
@@ -20,12 +20,12 @@ const COLORS = {
     muted: "#4A7090",
 };
 
-const [pageLoading, setPageLoading] = useState(true);
 const timeNow = () => new Date().toLocaleTimeString("en-US", { hour12: false });
 const wallets = ["0x3f...a1b2", "0x9c...d4e5", "0x1a...f6g7", "0xb2...h8i9", "0x7e...j0k1"];
 const randomWallet = () => wallets[Math.floor(Math.random() * wallets.length)];
 
 export default function TokenPage() {
+    const [pageLoading, setPageLoading] = useState(true);
     const { address } = useParams();
     const { account, signer, connectWallet } = useWallet();
     const [contract, setContract] = useState(null);
@@ -212,6 +212,36 @@ export default function TokenPage() {
                                                 formatter={(v) => [v.toFixed(8) + " ETH", "Price"]}
                                             />
                                             <Line type="monotone" dataKey="price" stroke={COLORS.accent} strokeWidth={2} dot={false} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+
+                                {/* Bonding Curve */}
+                                <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 20 }}>
+                                    <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 16 }}>// BONDING CURVE</div>
+                                    <ResponsiveContainer width="100%" height={180}>
+                                        <LineChart data={(() => {
+                                            const points = [];
+                                            for (let i = 0; i <= 200; i++) {
+                                                const supply = i * 50;
+                                                points.push({ supply, price: (supply * supply) / 1e12 });
+                                            }
+                                            return points;
+                                        })()}>
+                                            <XAxis dataKey="supply" hide />
+                                            <YAxis hide />
+                                            <Tooltip
+                                                contentStyle={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, fontFamily: "IBM Plex Mono", fontSize: 11 }}
+                                                formatter={(v) => [v.toFixed(8) + " ETH", "Price"]}
+                                            />
+                                            <Line type="monotone" dataKey="price" stroke={COLORS.yellow} strokeWidth={2} dot={false} />
+                                            <ReferenceDot
+                                                x={parseFloat(totalSupply)}
+                                                y={(parseFloat(totalSupply) * parseFloat(totalSupply)) / 1e12}
+                                                r={6}
+                                                fill={COLORS.accent}
+                                                stroke="none"
+                                            />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
