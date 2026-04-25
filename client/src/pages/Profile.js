@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/NavBar';
-import { useWallet } from '../context/WalletContext';
 import { getTokensByCreator } from '../services/tokenService';
+import { useWallet } from '../context/WalletContext';
 const COLORS = {
     bg: "#050A0E",
     surface: "#0A1520",
@@ -17,7 +17,7 @@ const COLORS = {
 export default function Profile() {
     const { address } = useParams();
     const navigate = useNavigate();
-    const { account } = useWallet();
+    const { account, disconnectWallet } = useWallet();
     const [tokens, setTokens] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -63,9 +63,17 @@ export default function Profile() {
                                 {tokens.length} TOKENS CREATED
                             </span>
                             {isOwner && (
-                                <span style={{ fontSize: 10, border: `1px solid ${COLORS.accent}`, color: COLORS.accent, padding: "2px 8px" }}>
-                                    YOU
-                                </span>
+                                <>
+                                    <span style={{ fontSize: 10, border: `1px solid ${COLORS.accent}`, color: COLORS.accent, padding: "2px 8px" }}>
+                                        YOU
+                                    </span>
+                                    <span
+                                        onClick={disconnectWallet}
+                                        style={{ fontSize: 10, border: `1px solid ${COLORS.red}`, color: COLORS.red, padding: "2px 8px", cursor: "pointer" }}
+                                    >
+                                        DISCONNECT
+                                    </span>
+                                </>
                             )}
                         </div>
                     </div>

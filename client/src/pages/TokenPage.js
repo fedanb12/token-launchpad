@@ -222,9 +222,10 @@ export default function TokenPage() {
                                     <ResponsiveContainer width="100%" height={180}>
                                         <LineChart data={(() => {
                                             const points = [];
-                                            for (let i = 0; i <= 200; i++) {
-                                                const supply = i * 50;
-                                                points.push({ supply, price: (supply * supply) / 1e12 });
+                                            for (let i = 1; i <= 100; i++) {
+                                                const supplyNorm = i;
+                                                const price = (supplyNorm * supplyNorm) * 0.000001;
+                                                points.push({ supply: supplyNorm, price });
                                             }
                                             return points;
                                         })()}>
@@ -236,8 +237,8 @@ export default function TokenPage() {
                                             />
                                             <Line type="monotone" dataKey="price" stroke={COLORS.yellow} strokeWidth={2} dot={false} />
                                             <ReferenceDot
-                                                x={parseFloat(totalSupply)}
-                                                y={(parseFloat(totalSupply) * parseFloat(totalSupply)) / 1e12}
+                                                x={Math.min(Math.round(parseFloat(totalSupply) / 1e18), 100)}
+                                                y={Math.pow(Math.min(Math.round(parseFloat(totalSupply) / 1e18), 100), 2) * 0.000001}
                                                 r={6}
                                                 fill={COLORS.accent}
                                                 stroke="none"
