@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { ethers } from 'ethers';
@@ -32,7 +33,6 @@ export default function TokenPage() {
     const [balance, setBalance] = useState("0");
     const [buyAmount, setBuyAmount] = useState("");
     const [sellAmount, setSellAmount] = useState("");
-    const [status, setStatus] = useState("");
     const [activity, setActivity] = useState([]);
     const [priceHistory, setPriceHistory] = useState([{ time: 0, price: 0 }]);
 
@@ -93,11 +93,11 @@ export default function TokenPage() {
     const buyTokens = async () => {
         if (!account) { await connectWallet(); return; }
         if (!contract || !buyAmount) return;
+        const toastId = toast.loading("Confirming buy...");
         try {
-            setStatus("⏳ Confirming buy...");
             const tx = await contract.connect(signer).buy({ value: ethers.parseEther(buyAmount) });
             await tx.wait();
-            setStatus("✅ Buy successful!");
+            toast.success("Buy successful!", { id: toastId });
             addActivity("BUY", buyAmount + " ETH");
             await saveTrade({
                 tokenAddress: address,
@@ -109,18 +109,18 @@ export default function TokenPage() {
             loadData(contract, account);
             setBuyAmount("");
         } catch (e) {
-            setStatus("❌ " + (e.reason || e.message));
+            toast.error(e.reason || e.message, { id: toastId });
         }
     };
 
     const sellTokens = async () => {
         if (!account) { await connectWallet(); return; }
         if (!contract || !sellAmount) return;
+        const toastId = toast.loading("Confirming sell...");
         try {
-            setStatus("⏳ Confirming sell...");
             const tx = await contract.connect(signer).sell(ethers.parseEther(sellAmount));
             await tx.wait();
-            setStatus("✅ Sell successful!");
+            toast.success("Sell successful!", { id: toastId });
             addActivity("SELL", sellAmount + " tokens");
             await saveTrade({
                 tokenAddress: address,
@@ -132,7 +132,7 @@ export default function TokenPage() {
             loadData(contract, account);
             setSellAmount("");
         } catch (e) {
-            setStatus("❌ " + (e.reason || e.message));
+            toast.error(e.reason || e.message, { id: toastId });
         }
     };
 
@@ -143,6 +143,7 @@ export default function TokenPage() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
         @keyframes glow { 0%,100%{box-shadow:0 0 10px #00FF8822} 50%{box-shadow:0 0 25px #00FF8855} }
+        @media (min-width: 900px) { .token-grid { grid-template-columns: 1fr 380px !important; } }
         input:focus { outline: none; border-color: #00FF88 !important; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #0F2535; }
@@ -175,8 +176,7 @@ export default function TokenPage() {
                     </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 24 }}>
-
+                <div className="token-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 24 }}>
                     {/* Left: Charts */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
@@ -270,12 +270,6 @@ export default function TokenPage() {
                                     </button>
                                 </div>
                             </div>
-
-                            {status && (
-                                <div style={{ padding: 12, background: COLORS.bg, border: `1px solid ${COLORS.border}`, fontSize: 12, color: COLORS.yellow, animation: "fadeIn 0.3s ease" }}>
-                                    {status}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>

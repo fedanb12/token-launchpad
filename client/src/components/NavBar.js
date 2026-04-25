@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
 
@@ -13,12 +14,13 @@ const COLORS = {
 export default function Navbar() {
     const { account, connectWallet } = useWallet();
     const navigate = useNavigate();
+    const [menuOpen, setMenuOpen] = useState(false);
 
     return (
         <nav style={{
             background: COLORS.surface,
             borderBottom: `1px solid ${COLORS.border}`,
-            padding: "16px 32px",
+            padding: "16px 24px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -26,17 +28,24 @@ export default function Navbar() {
             top: 0,
             zIndex: 100,
         }}>
-            <style>{`@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap');`}</style>
+            <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap');
+        @media (max-width: 600px) {
+          .nav-links { display: none !important; }
+          .nav-links.open { display: flex !important; flex-direction: column; position: absolute; top: 60px; left: 0; right: 0; background: #0A1520; border-bottom: 1px solid #0F2535; padding: 16px 24px; gap: 16px; z-index: 99; }
+          .hamburger { display: flex !important; }
+        }
+      `}</style>
 
             {/* Logo */}
             <Link to="/" style={{ textDecoration: "none" }}>
-                <div style={{ fontFamily: "IBM Plex Mono", fontSize: 20, fontWeight: "bold", color: COLORS.accent, letterSpacing: "0.1em" }}>
+                <div style={{ fontFamily: "IBM Plex Mono", fontSize: 18, fontWeight: "bold", color: COLORS.accent, letterSpacing: "0.1em" }}>
                     ◈ PUMPZONE
                 </div>
             </Link>
 
-            {/* Links */}
-            <div style={{ display: "flex", gap: 32, alignItems: "center" }}>
+            {/* Desktop Links */}
+            <div className={`nav-links ${menuOpen ? 'open' : ''}`} style={{ display: "flex", gap: 32, alignItems: "center" }}>
                 <Link to="/explore" style={{ fontFamily: "IBM Plex Mono", fontSize: 12, color: COLORS.muted, textDecoration: "none", letterSpacing: "0.1em" }}>
                     EXPLORE
                 </Link>
@@ -50,8 +59,8 @@ export default function Navbar() {
                 )}
             </div>
 
-            {/* Wallet */}
-            <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {/* Wallet */}
                 {!account ? (
                     <button onClick={connectWallet} style={{
                         background: COLORS.accent,
@@ -64,7 +73,7 @@ export default function Navbar() {
                         cursor: "pointer",
                         letterSpacing: "0.1em",
                     }}>
-                        CONNECT WALLET
+                        CONNECT
                     </button>
                 ) : (
                     <div
@@ -90,6 +99,17 @@ export default function Navbar() {
                         <span style={{ fontFamily: "IBM Plex Mono", fontSize: 11, color: COLORS.accent }}>MY ACCOUNT</span>
                     </div>
                 )}
+
+                {/* Hamburger */}
+                <div
+                    className="hamburger"
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    style={{ display: "none", flexDirection: "column", gap: 5, cursor: "pointer", padding: 4 }}
+                >
+                    <div style={{ width: 22, height: 2, background: COLORS.accent }} />
+                    <div style={{ width: 22, height: 2, background: COLORS.accent }} />
+                    <div style={{ width: 22, height: 2, background: COLORS.accent }} />
+                </div>
             </div>
         </nav>
     );

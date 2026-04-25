@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
@@ -23,7 +24,6 @@ export default function Launch() {
     const navigate = useNavigate();
     const { account, signer, connectWallet } = useWallet();
     const [form, setForm] = useState({ name: "", ticker: "", description: "", imageUrl: "" });
-    const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
@@ -36,14 +36,14 @@ export default function Launch() {
             return;
         }
         if (!form.name || !form.ticker) {
-            setStatus("❌ Name and ticker are required");
+            toast.error("Name and ticker are required");
             return;
         }
 
-        try {
-            setLoading(true);
-            setStatus("⏳ Launching your token...");
+        const toastId = toast.loading("Launching your token...");
+        setLoading(true);
 
+        try {
             const factory = new ethers.Contract(FACTORY_ADDRESS, TokenFactoryABI.abi, signer);
             const tx = await factory.createToken(
                 form.name,
@@ -53,7 +53,7 @@ export default function Launch() {
                 { value: ethers.parseEther("0.001") }
             );
 
-            setStatus("⏳ Waiting for confirmation...");
+            toast.loading("Waiting for confirmation...", { id: toastId });
             const receipt = await tx.wait();
 
             const event = receipt.logs.find(log => {
@@ -76,11 +76,11 @@ export default function Launch() {
                     creator: account,
                 });
 
-                setStatus("✅ Token launched!");
+                toast.success("Token launched!", { id: toastId });
                 setTimeout(() => navigate(`/token/${tokenAddress}`), 1500);
             }
         } catch (e) {
-            setStatus("❌ " + (e.reason || e.message));
+            toast.error(e.reason || e.message, { id: toastId });
         }
         setLoading(false);
     };
@@ -158,12 +158,6 @@ export default function Launch() {
                     <div style={{ background: COLORS.bg, border: `1px solid ${COLORS.border}`, padding: 14, fontSize: 11, color: COLORS.muted, lineHeight: 1.8 }}>
                         ⚡ Creation fee: <span style={{ color: COLORS.accent }}>0.001 ETH</span> — This deploys your token contract on Sepolia.
                     </div>
-
-                    {status && (
-                        <div style={{ padding: 12, background: COLORS.bg, border: `1px solid ${COLORS.border}`, fontSize: 12, color: COLORS.yellow }}>
-                            {status}
-                        </div>
-                    )}
 
                     <button
                         onClick={handleLaunch}
