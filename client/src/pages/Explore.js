@@ -1,3 +1,4 @@
+import { TokenCardSkeleton } from '../components/Skeleton';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/NavBar';
@@ -68,8 +69,8 @@ export default function Explore() {
 
                 {/* Token Grid */}
                 {loading ? (
-                    <div style={{ textAlign: "center", padding: "80px 0", color: COLORS.muted, fontSize: 12 }}>
-                        Loading tokens...
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+                        {[1, 2, 3, 4, 5, 6].map(i => <TokenCardSkeleton key={i} />)}
                     </div>
                 ) : filtered.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "80px 0" }}>

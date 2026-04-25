@@ -1,3 +1,4 @@
+import { TokenPageSkeleton } from '../components/Skeleton';
 import toast from 'react-hot-toast';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
@@ -19,6 +20,7 @@ const COLORS = {
     muted: "#4A7090",
 };
 
+const [pageLoading, setPageLoading] = useState(true);
 const timeNow = () => new Date().toLocaleTimeString("en-US", { hour12: false });
 const wallets = ["0x3f...a1b2", "0x9c...d4e5", "0x1a...f6g7", "0xb2...h8i9", "0x7e...j0k1"];
 const randomWallet = () => wallets[Math.floor(Math.random() * wallets.length)];
@@ -56,6 +58,7 @@ export default function TokenPage() {
                 const bal = await c.balanceOf(acc);
                 setBalance(ethers.formatEther(bal));
             }
+            setPageLoading(false);
         } catch (e) {
             console.error(e);
         }
@@ -152,127 +155,132 @@ export default function TokenPage() {
             <Navbar />
 
             <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-
-                {/* Token Header */}
-                <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 32, padding: 24, background: COLORS.surface, border: `1px solid ${COLORS.border}` }}>
-                    {tokenInfo.imageUrl ? (
-                        <img src={tokenInfo.imageUrl} alt={tokenInfo.name} style={{ width: 64, height: 64, objectFit: "cover", border: `1px solid ${COLORS.border}` }} />
-                    ) : (
-                        <div style={{ width: 64, height: 64, background: COLORS.bg, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: COLORS.accent }}>
-                            ◈
-                        </div>
-                    )}
-                    <div>
-                        <h1 style={{ fontSize: 24, fontWeight: "bold", color: COLORS.text }}>{tokenInfo.name || "Loading..."}</h1>
-                        <div style={{ display: "flex", gap: 12, marginTop: 8, alignItems: "center" }}>
-                            <span style={{ fontSize: 10, border: `1px solid ${COLORS.accent}`, color: COLORS.accent, padding: "2px 8px" }}>${tokenInfo.symbol}</span>
-                            <span style={{ fontSize: 11, color: COLORS.muted }}>by {tokenInfo.creator ? `${tokenInfo.creator.slice(0, 6)}...${tokenInfo.creator.slice(-4)}` : "..."}</span>
-                        </div>
-                        {tokenInfo.description && <p style={{ fontSize: 12, color: COLORS.muted, marginTop: 8, lineHeight: 1.6 }}>{tokenInfo.description}</p>}
-                    </div>
-                    <div style={{ marginLeft: "auto", textAlign: "right" }}>
-                        <div style={{ fontSize: 22, fontWeight: "bold", color: COLORS.accent }}>{tokenPrice} ETH</div>
-                        <div style={{ fontSize: 10, color: COLORS.muted, marginTop: 4, letterSpacing: "0.1em" }}>CURRENT PRICE</div>
-                    </div>
-                </div>
-
-                <div className="token-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 24 }}>
-                    {/* Left: Charts */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-                        {/* Stats */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-                            {[
-                                { label: "TOTAL SUPPLY", value: parseFloat(totalSupply).toFixed(2) },
-                                { label: "YOUR BALANCE", value: parseFloat(balance).toFixed(2) },
-                                { label: "CONTRACT", value: `${address?.slice(0, 6)}...${address?.slice(-4)}` },
-                            ].map((s, i) => (
-                                <div key={i} style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 16, textAlign: "center" }}>
-                                    <div style={{ fontSize: 16, fontWeight: "bold", color: COLORS.accent }}>{s.value}</div>
-                                    <div style={{ fontSize: 9, color: COLORS.muted, marginTop: 4, letterSpacing: "0.15em" }}>{s.label}</div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Price Chart */}
-                        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 20 }}>
-                            <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 16 }}>// PRICE HISTORY</div>
-                            <ResponsiveContainer width="100%" height={200}>
-                                <LineChart data={priceHistory}>
-                                    <XAxis dataKey="time" hide />
-                                    <YAxis hide />
-                                    <Tooltip
-                                        contentStyle={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, fontFamily: "IBM Plex Mono", fontSize: 11 }}
-                                        formatter={(v) => [v.toFixed(8) + " ETH", "Price"]}
-                                    />
-                                    <Line type="monotone" dataKey="price" stroke={COLORS.accent} strokeWidth={2} dot={false} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-
-                        {/* Activity Feed */}
-                        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 20 }}>
-                            <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 16 }}>// ACTIVITY FEED</div>
-                            {activity.length === 0 ? (
-                                <div style={{ fontSize: 11, color: COLORS.muted, textAlign: "center", padding: "20px 0" }}>No activity yet — be the first to trade</div>
+                {pageLoading ? (
+                    <TokenPageSkeleton />
+                ) : (
+                    <>
+                        {/* Token Header */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 32, padding: 24, background: COLORS.surface, border: `1px solid ${COLORS.border}` }}>
+                            {tokenInfo.imageUrl ? (
+                                <img src={tokenInfo.imageUrl} alt={tokenInfo.name} style={{ width: 64, height: 64, objectFit: "cover", border: `1px solid ${COLORS.border}` }} />
                             ) : (
-                                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 200, overflowY: "auto" }}>
-                                    {activity.map((e, i) => (
-                                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${COLORS.border}`, animation: i === 0 ? "fadeIn 0.3s ease" : "none" }}>
-                                            <div style={{ display: "flex", gap: 10 }}>
-                                                <span style={{ color: e.type === "BUY" ? COLORS.accent : COLORS.red, fontSize: 11, fontWeight: "bold", width: 36 }}>{e.type}</span>
-                                                <span style={{ fontSize: 11, color: COLORS.muted }}>{e.wallet}</span>
-                                            </div>
-                                            <div>
-                                                <span style={{ fontSize: 11, color: COLORS.text }}>{e.amount}</span>
-                                                <span style={{ fontSize: 10, color: COLORS.muted, marginLeft: 8 }}>{e.time}</span>
-                                            </div>
+                                <div style={{ width: 64, height: 64, background: COLORS.bg, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: COLORS.accent }}>
+                                    ◈
+                                </div>
+                            )}
+                            <div>
+                                <h1 style={{ fontSize: 24, fontWeight: "bold", color: COLORS.text }}>{tokenInfo.name || "Loading..."}</h1>
+                                <div style={{ display: "flex", gap: 12, marginTop: 8, alignItems: "center" }}>
+                                    <span style={{ fontSize: 10, border: `1px solid ${COLORS.accent}`, color: COLORS.accent, padding: "2px 8px" }}>${tokenInfo.symbol}</span>
+                                    <span style={{ fontSize: 11, color: COLORS.muted }}>by {tokenInfo.creator ? `${tokenInfo.creator.slice(0, 6)}...${tokenInfo.creator.slice(-4)}` : "..."}</span>
+                                </div>
+                                {tokenInfo.description && <p style={{ fontSize: 12, color: COLORS.muted, marginTop: 8, lineHeight: 1.6 }}>{tokenInfo.description}</p>}
+                            </div>
+                            <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                                <div style={{ fontSize: 22, fontWeight: "bold", color: COLORS.accent }}>{tokenPrice} ETH</div>
+                                <div style={{ fontSize: 10, color: COLORS.muted, marginTop: 4, letterSpacing: "0.1em" }}>CURRENT PRICE</div>
+                            </div>
+                        </div>
+
+                        <div className="token-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 24 }}>
+                            {/* Left: Charts */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+                                {/* Stats */}
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                                    {[
+                                        { label: "TOTAL SUPPLY", value: parseFloat(totalSupply).toFixed(2) },
+                                        { label: "YOUR BALANCE", value: parseFloat(balance).toFixed(2) },
+                                        { label: "CONTRACT", value: `${address?.slice(0, 6)}...${address?.slice(-4)}` },
+                                    ].map((s, i) => (
+                                        <div key={i} style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 16, textAlign: "center" }}>
+                                            <div style={{ fontSize: 16, fontWeight: "bold", color: COLORS.accent }}>{s.value}</div>
+                                            <div style={{ fontSize: 9, color: COLORS.muted, marginTop: 4, letterSpacing: "0.15em" }}>{s.label}</div>
                                         </div>
                                     ))}
                                 </div>
-                            )}
-                        </div>
-                    </div>
 
-                    {/* Right: Trade Panel */}
-                    <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 24, height: "fit-content" }}>
-                        <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 20 }}>// TRADE</div>
+                                {/* Price Chart */}
+                                <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 20 }}>
+                                    <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 16 }}>// PRICE HISTORY</div>
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <LineChart data={priceHistory}>
+                                            <XAxis dataKey="time" hide />
+                                            <YAxis hide />
+                                            <Tooltip
+                                                contentStyle={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, fontFamily: "IBM Plex Mono", fontSize: 11 }}
+                                                formatter={(v) => [v.toFixed(8) + " ETH", "Price"]}
+                                            />
+                                            <Line type="monotone" dataKey="price" stroke={COLORS.accent} strokeWidth={2} dot={false} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                            <div>
-                                <div style={{ fontSize: 10, color: COLORS.accent, letterSpacing: "0.1em", marginBottom: 8 }}>BUY</div>
-                                <div style={{ display: "flex", gap: 8 }}>
-                                    <input
-                                        type="number"
-                                        placeholder="ETH amount"
-                                        value={buyAmount}
-                                        onChange={e => setBuyAmount(e.target.value)}
-                                        style={{ flex: 1, background: COLORS.bg, border: `1px solid ${COLORS.border}`, color: COLORS.text, fontFamily: "IBM Plex Mono", fontSize: 13, padding: "10px 12px" }}
-                                    />
-                                    <button onClick={buyTokens} style={{ background: COLORS.accent, color: "#000", border: "none", padding: "10px 16px", fontFamily: "IBM Plex Mono", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
-                                        BUY
-                                    </button>
+                                {/* Activity Feed */}
+                                <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 20 }}>
+                                    <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 16 }}>// ACTIVITY FEED</div>
+                                    {activity.length === 0 ? (
+                                        <div style={{ fontSize: 11, color: COLORS.muted, textAlign: "center", padding: "20px 0" }}>No activity yet — be the first to trade</div>
+                                    ) : (
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 200, overflowY: "auto" }}>
+                                            {activity.map((e, i) => (
+                                                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${COLORS.border}`, animation: i === 0 ? "fadeIn 0.3s ease" : "none" }}>
+                                                    <div style={{ display: "flex", gap: 10 }}>
+                                                        <span style={{ color: e.type === "BUY" ? COLORS.accent : COLORS.red, fontSize: 11, fontWeight: "bold", width: 36 }}>{e.type}</span>
+                                                        <span style={{ fontSize: 11, color: COLORS.muted }}>{e.wallet}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span style={{ fontSize: 11, color: COLORS.text }}>{e.amount}</span>
+                                                        <span style={{ fontSize: 10, color: COLORS.muted, marginLeft: 8 }}>{e.time}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            <div>
-                                <div style={{ fontSize: 10, color: COLORS.red, letterSpacing: "0.1em", marginBottom: 8 }}>SELL</div>
-                                <div style={{ display: "flex", gap: 8 }}>
-                                    <input
-                                        type="number"
-                                        placeholder="Token amount"
-                                        value={sellAmount}
-                                        onChange={e => setSellAmount(e.target.value)}
-                                        style={{ flex: 1, background: COLORS.bg, border: `1px solid ${COLORS.border}`, color: COLORS.text, fontFamily: "IBM Plex Mono", fontSize: 13, padding: "10px 12px" }}
-                                    />
-                                    <button onClick={sellTokens} style={{ background: "transparent", color: COLORS.red, border: `1px solid ${COLORS.red}`, padding: "10px 16px", fontFamily: "IBM Plex Mono", fontSize: 12, cursor: "pointer" }}>
-                                        SELL
-                                    </button>
+                            {/* Right: Trade Panel */}
+                            <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 24, height: "fit-content" }}>
+                                <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 20 }}>// TRADE</div>
+
+                                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                                    <div>
+                                        <div style={{ fontSize: 10, color: COLORS.accent, letterSpacing: "0.1em", marginBottom: 8 }}>BUY</div>
+                                        <div style={{ display: "flex", gap: 8 }}>
+                                            <input
+                                                type="number"
+                                                placeholder="ETH amount"
+                                                value={buyAmount}
+                                                onChange={e => setBuyAmount(e.target.value)}
+                                                style={{ flex: 1, background: COLORS.bg, border: `1px solid ${COLORS.border}`, color: COLORS.text, fontFamily: "IBM Plex Mono", fontSize: 13, padding: "10px 12px" }}
+                                            />
+                                            <button onClick={buyTokens} style={{ background: COLORS.accent, color: "#000", border: "none", padding: "10px 16px", fontFamily: "IBM Plex Mono", fontSize: 12, fontWeight: "bold", cursor: "pointer" }}>
+                                                BUY
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style={{ fontSize: 10, color: COLORS.red, letterSpacing: "0.1em", marginBottom: 8 }}>SELL</div>
+                                        <div style={{ display: "flex", gap: 8 }}>
+                                            <input
+                                                type="number"
+                                                placeholder="Token amount"
+                                                value={sellAmount}
+                                                onChange={e => setSellAmount(e.target.value)}
+                                                style={{ flex: 1, background: COLORS.bg, border: `1px solid ${COLORS.border}`, color: COLORS.text, fontFamily: "IBM Plex Mono", fontSize: 13, padding: "10px 12px" }}
+                                            />
+                                            <button onClick={sellTokens} style={{ background: "transparent", color: COLORS.red, border: `1px solid ${COLORS.red}`, padding: "10px 16px", fontFamily: "IBM Plex Mono", fontSize: 12, cursor: "pointer" }}>
+                                                SELL
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </>
+                )}
             </div>
         </div>
     );
