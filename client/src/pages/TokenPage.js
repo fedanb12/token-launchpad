@@ -1,13 +1,15 @@
 import { TokenPageSkeleton } from '../components/Skeleton';
 import toast from 'react-hot-toast';
 import { useState, useEffect, useCallback } from 'react';
+import TokenABI from '../contracts/Token.json';
+import OldTokenABI from '../contracts/TokenLaunchpad.json';
 import { useParams } from 'react-router-dom';
 import { ethers } from 'ethers';
 import Navbar from '../components/NavBar';
 import { useWallet } from '../context/WalletContext';
-import TokenABI from '../contracts/Token.json';
 import { getToken, saveTrade, getTradesForToken } from '../services/tokenService';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
+import CandlestickChart from '../components/Candlestickchart';
 
 const COLORS = {
     bg: "#050A0E",
@@ -67,25 +69,40 @@ export default function TokenPage() {
     useEffect(() => {
         if (!address) return;
         const provider = new ethers.BrowserProvider(window.ethereum);
-        const c = new ethers.Contract(address, TokenABI.abi, signer || provider);
-        setContract(c);
-        loadData(c, account);
+        let c;
 
-        // Load trade history from Firebase
-        getToken(address).then(tokenData => {
-            if (tokenData) {
-                getTradesForToken(address).then(trades => {
-                    setActivity(trades.map(t => ({
-                        type: t.type,
-                        wallet: t.wallet,
-                        amount: t.amount,
-                        time: new Date(t.timestamp).toLocaleTimeString("en-US", { hour12: false })
-                    })));
-                });
+        const tryLoad = async () => {
+            try {
+                c = new ethers.Contract(address, TokenABI.abi, signer || provider);
+                await c.totalSupply();
+                setContract(c);
+                loadData(c, account);
+            } catch {
+                c = new ethers.Contract(address, OldTokenABI.abi, signer || provider);
+                setContract(c);
+                loadData(c, account);
             }
-        });
 
-        const interval = setInterval(() => loadData(c, account), 5000);
+            getToken(address).then(tokenData => {
+                if (tokenData) {
+                    getTradesForToken(address).then(trades => {
+                        setActivity(trades.map(t => ({
+                            type: t.type,
+                            wallet: t.wallet,
+                            amount: t.amount,
+                            time: new Date(t.timestamp).toLocaleTimeString("en-US", { hour12: false })
+                        })));
+                    });
+                }
+            });
+        };
+
+        tryLoad();
+
+        const interval = setInterval(() => {
+            if (c) loadData(c, account);
+        }, 5000);
+
         return () => clearInterval(interval);
     }, [address, signer, account, loadData]);
 
@@ -102,13 +119,21 @@ export default function TokenPage() {
             await tx.wait();
             toast.success("Buy successful!", { id: toastId });
             addActivity("BUY", buyAmount + " ETH");
+
+            const currentSupply = await contract.totalSupply();
+            const currentPrice = await contract.getPrice(currentSupply);
+            const priceInEth = parseFloat(ethers.formatEther(currentPrice));
+
             await saveTrade({
                 tokenAddress: address,
                 type: "BUY",
                 wallet: `${account.slice(0, 6)}...${account.slice(-4)}`,
                 amount: buyAmount + " ETH",
                 trader: account,
+                price: priceInEth,
+                timestamp: Date.now(),
             });
+
             loadData(contract, account);
             setBuyAmount("");
         } catch (e) {
@@ -125,13 +150,21 @@ export default function TokenPage() {
             await tx.wait();
             toast.success("Sell successful!", { id: toastId });
             addActivity("SELL", sellAmount + " tokens");
+
+            const currentSupply = await contract.totalSupply();
+            const currentPrice = await contract.getPrice(currentSupply);
+            const priceInEth = parseFloat(ethers.formatEther(currentPrice));
+
             await saveTrade({
                 tokenAddress: address,
                 type: "SELL",
                 wallet: `${account.slice(0, 6)}...${account.slice(-4)}`,
                 amount: sellAmount + " tokens",
                 trader: account,
+                price: priceInEth,
+                timestamp: Date.now(),
             });
+
             loadData(contract, account);
             setSellAmount("");
         } catch (e) {
@@ -200,20 +233,10 @@ export default function TokenPage() {
                                     ))}
                                 </div>
 
-                                {/* Price Chart */}
+                                {/* Candlestick Chart */}
                                 <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: 20 }}>
-                                    <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 16 }}>// PRICE HISTORY</div>
-                                    <ResponsiveContainer width="100%" height={200}>
-                                        <LineChart data={priceHistory}>
-                                            <XAxis dataKey="time" hide />
-                                            <YAxis hide />
-                                            <Tooltip
-                                                contentStyle={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, fontFamily: "IBM Plex Mono", fontSize: 11 }}
-                                                formatter={(v) => [v.toFixed(8) + " ETH", "Price"]}
-                                            />
-                                            <Line type="monotone" dataKey="price" stroke={COLORS.accent} strokeWidth={2} dot={false} />
-                                        </LineChart>
-                                    </ResponsiveContainer>
+                                    <div style={{ fontSize: 10, color: COLORS.muted, letterSpacing: "0.15em", marginBottom: 16 }}>// PRICE CHART</div>
+                                    <CandlestickChart trades={activity} />
                                 </div>
 
                                 {/* Bonding Curve */}
@@ -237,8 +260,8 @@ export default function TokenPage() {
                                             />
                                             <Line type="monotone" dataKey="price" stroke={COLORS.yellow} strokeWidth={2} dot={false} />
                                             <ReferenceDot
-                                                x={Math.min(Math.round(parseFloat(totalSupply) / 1e18), 100)}
-                                                y={Math.pow(Math.min(Math.round(parseFloat(totalSupply) / 1e18), 100), 2) * 0.000001}
+                                                x={Math.min(Math.round(parseFloat(totalSupply)), 100)}
+                                                y={Math.pow(Math.min(Math.round(parseFloat(totalSupply)), 100), 2) * 0.000001}
                                                 r={6}
                                                 fill={COLORS.accent}
                                                 stroke="none"

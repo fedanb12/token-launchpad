@@ -7,7 +7,7 @@ import { useWallet } from '../context/WalletContext';
 import TokenFactoryABI from '../contracts/TokenFactory.json';
 import { saveToken } from '../services/tokenService';
 
-const FACTORY_ADDRESS = "0x502cB0406961E5E7Adb7C4cB5fb7aD4dDF6cF259";
+const FACTORY_ADDRESS = "0xAb382489Af0a07B66F08E890Ae8daaE3F29F05B5";
 
 const COLORS = {
     bg: "#050A0E",
